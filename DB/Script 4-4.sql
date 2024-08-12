@@ -194,3 +194,123 @@ LIMIT 1;
 
 -- STUDENT_CLASS의 외래키가 1:n 설정
 -- 학생은 여러 개의 과목을 수강할 수 있음
+
+
+
+-- 문제 1, 2, 5, 6 다시 풀기
+
+-- 외래키를 사용하는 이유: 데이터의 정합성을 지키기 위해
+-- 논리적으로 잘못된 데이터가 테이블에 들어오는 것을 막기 위해서
+-- 정합성 整合性 | 공리적인 논리 체계에서 우선 필요로 하는 요건으로, 공리계에 논리적 모순이 없는 것.
+
+DROP TABLE USERS;
+DROP TABLE BOARD;
+
+-- 문제 1. 아래와 같이 USERS(사용자)와 BOARD(게시물) 테이블 생성.
+
+CREATE TABLE USERS (
+	ID VARCHAR(20) PRIMARY KEY COMMENT '아이디',
+	PASSWORD VARCHAR(200) COMMENT '패스워드',
+	NAME VARCHAR(20) COMMENT '이름'
+);
+
+CREATE TABLE BOARD (
+	NO INT AUTO_INCREMENT PRIMARY KEY COMMENT '글 번호',
+	TITLE VARCHAR(50) COMMENT '제목',
+	CONTENT VARCHAR(255) COMMENT '내용',
+	WRITER VARCHAR(20) COMMENT '작성자',
+	REG_DATE DATETIME COMMENT '등록일',
+	UPDATE_DATE DATETIME COMMENT '수정일',
+	FOREIGN KEY (WRITER) REFERENCES USERS(ID) 
+);
+
+-- 문제 2. 두 테이블에 데이터 입력.
+
+INSERT INTO USERS 
+VALUES
+('USER1', '1234', '둘리');
+INSERT INTO USERS 
+VALUES
+('USER2', '1234', '또치');
+INSERT INTO USERS 
+VALUES
+('ADMIN', '1234', '도우너');
+
+INSERT INTO BOARD (TITLE, CONTENT, WRITER, REG_DATE, UPDATE_DATE)
+VALUES
+('제목1!', '내용입니다1.', 'USER1', NOW(), NOW()),
+('제목2!', '내용입니다2.', 'USER2', NOW(), NOW()),
+('제목3!', '내용입니다3.', 'USER1', NOW(), NOW()),
+('제목4!', '내용입니다4.', 'USER2', NOW(), NOW()),
+('제목5!', '내용입니다5.', 'USER2', NOW(), NOW());
+
+INSERT INTO BOARD (TITLE, CONTENT, WRITER, REG_DATE, UPDATE_DATE)
+VALUES
+('제목6!', '내용입니다6.', 'ADMIN', NOW(), NOW());
+
+-- 이해를 돕기 위한 예시 EX)
+-- Q. 네이버 카페에 글 쓰기
+-- 1) 회원가입 (USERS 데이터 INSERT)
+-- 2) 로그인
+-- 3) 게시글 작성 (BOARD 데이터 INSERT)
+-- USERS의 ID를 확인해서 작성자 컬럼 확인, 회원인 사람만 게시글 작성 가능
+
+-- 외래키로 설정된 WRITER에 부모에게 없는 사용자를 작성자로 입력하면 오류!
+-- 카페의 회원이 아닌 사람은 게시물을 작성할 수 없으니까!
+
+
+-- 문제 5. 아래와 같이 CLASS(수업), STUDENT(학생), STUDENT_CLASS(수강) 테이블 생성.
+
+DROP TABLE CLASS;
+DROP TABLE STUDENT;
+DROP TABLE STUDENT_CLASS;
+
+CREATE TABLE CLASS (
+	CLASS_NO INT PRIMARY KEY COMMENT '수업 번호',
+	CLASS_NAME VARCHAR(20) COMMENT '수업명'
+);
+
+CREATE TABLE STUDENT (
+	STUDENT_NO INT PRIMARY KEY COMMENT '학생 번호',
+	STUDENT_NAME VARCHAR(20) COMMENT '학생명'
+);
+
+CREATE TABLE STUDENT_CLASS (
+	ST_NO INT COMMENT '학생 번호',
+	CL_NO INT COMMENT '수강하는 수업의 번호',
+	FOREIGN KEY (ST_NO) REFERENCES STUDENT(STUDENT_NO),
+	FOREIGN KEY (CL_NO) REFERENCES CLASS(CLASS_NO)
+);
+
+-- 문제 6. 세 테이블에 데이터 입력.
+
+INSERT INTO CLASS
+VALUES
+(1, '국어'),
+(2, '영어'),
+(3, '수학');
+
+INSERT INTO STUDENT
+VALUES 
+(1001, '짱구'),
+(1002, '짱아'),
+(1003, '흰둥이');
+
+INSERT INTO STUDENT_CLASS 
+VALUES 
+(1001, 1),
+(1001, 2),
+(1002, 2),
+(1002, 3),
+(1003, 1),
+(1003, 2),
+(1003, 3);
+
+-- 이해를 돕기 위한 예시 EX)
+-- Q. 학교에서 수업 듣기
+-- 1) 학교에서 열린 수업 (CLASS 데이터 INSERT)
+-- 3) 학교에 입학한 학생 (STUDENT 데이터 INSERT)
+-- CLASS 테이블의 CLASS_NO를 확인해서 학생인 사람만 수업 수강 가능
+
+-- 외래키로 설정된 ST_NO에 부모에게 없는 학생을 입력하면 오류!
+-- 학교의 학생이 아닌 사람이 수업을 수강할 순 없으니까!
