@@ -1,0 +1,319 @@
+-- Q1. 고객, 상품, 주문 테이블
+
+-- 고객 테이블
+CREATE TABLE CUSTOMER (
+    ID VARCHAR(20) COMMENT '고객의아이디',
+    NAME VARCHAR(20) NOT NULL COMMENT '고객의이름',
+    AGE INT COMMENT '나이',
+    GRADE VARCHAR(10) NOT NULL COMMENT '등급',
+    ADDRESS VARCHAR(50) COMMENT '주소',
+    PRIMARY KEY(ID)
+);
+
+INSERT INTO CUSTOMER VALUES
+('a001','짱구',5,'일반고객','서울'),
+('a002','철수',5,'VIP','서울'),
+('a003','훈이',5,'일반고객','인천'),
+('a004','유리',5,'VIP','인천'),
+('a005','맹구',5,'일반고객','서울');
+
+-- 상품 테이블
+CREATE TABLE ITEM (
+    NO INT COMMENT '상품번호',
+    NAME VARCHAR(20) COMMENT '상품명',
+    STOCK INT COMMENT '재고량',
+    PRICE INT COMMENT '가격',
+    COMPANY VARCHAR(20) COMMENT '제조사',
+    PRIMARY KEY(NO)
+);
+
+INSERT INTO ITEM VALUES
+(101,'마우스',10,15000,'삼성'),
+(102,'키보드',10,13000,'엘지'),
+(103,'스피커',10,20000,'샤오미'),
+(104,'모니터',10,50000,'벤큐');
+
+-- 상품주문 테이블
+CREATE TABLE ITEM_ORDER (
+    NO INT AUTO_INCREMENT COMMENT '주문번호',
+    CUSTOMER_ID VARCHAR(20) COMMENT '주문고객',
+    ITEM_NO INT COMMENT '주문상품',
+    COUNT INT COMMENT '주문수량',
+    ORDER_DATE DATE COMMENT '주문일자',
+    PRIMARY KEY(NO),
+    FOREIGN KEY (CUSTOMER_ID) REFERENCES CUSTOMER(ID),
+    FOREIGN KEY (ITEM_NO) REFERENCES ITEM(NO)
+);
+
+INSERT INTO ITEM_ORDER 
+(CUSTOMER_ID, ITEM_NO, COUNT, ORDER_DATE) 
+VALUES 
+('a001',101, 1, '20240101'),
+('a001',103, 1, '20240301'),
+('a002',102, 5, '20240101'),
+('a002',103, 2, '20240201'),
+('a002',104, 2, '20240201'),
+('a003',102, 1, '20240201'),
+('a003',104, 3, '20240301'),
+('a004',101, 2, '20240301'),
+('a004',102, 1, '20240301'),
+('a005',101, 5, '20240201');
+
+-- Q2.
+
+-- 월과 상품으로 구분하여, 판매수량이 제일 높은 3건을 구하세요.
+-- 1월에 마우스가 2번 팔렸을 수도 있기 때문에 max() 대신 sum()를 사용해야함
+-- 주문일자는 주문테이블에서, 상품명은 상품테이블에서 가져와야 함
+-- 주문 테이블과 상품 테이블 join
+SELECT CONCAT(MONTH(T1.ORDER_DATE),'월') AS 월, 
+T2.NAME AS 상품명, 
+SUM(T1.COUNT) AS 판매수량
+FROM ITEM_ORDER T1
+
+JOIN ITEM T2
+ON T1.ITEM_NO = T2.NO
+
+GROUP BY MONTH(T1.ORDER_DATE), T1.ITEM_NO
+-- ORDER BY SUM(T1.COUNT) DESC
+LIMIT 3;
+
+-- 회원의 등급과 배송지로 구분하여, 판매금액의 합계와 판매건수를 구하세요
+SELECT T2.GRADE AS 등급, T2.ADDRESS AS 배송지, SUM(T3.PRICE) AS 합계, COUNT(*) AS 판매건수
+FROM ITEM_ORDER T1
+JOIN CUSTOMER T2
+ON T1.CUSTOMER_ID = T2.ID
+JOIN ITEM T3
+ON T1.ITEM_NO = T3.NO
+GROUP BY T2.GRADE, T2.ADDRESS;
+
+-- Q3. 게시물, 사용자, 댓글 테이블
+
+-- 사용자
+CREATE TABLE USER (
+    ID      	VARCHAR(20) COMMENT '아이디',
+    PASSWORD    VARCHAR(200) NOT NULL COMMENT '패스워드',
+    NAME		VARCHAR(10) COMMENT '이름',
+    EMAIL		VARCHAR(50) COMMENT '이메일',
+    PRIMARY KEY(ID)
+);
+
+INSERT INTO USER
+VALUES
+('USER1', '1234', '둘리', 'user1@naver.com'),
+('USER2', '1234', '또치', 'user2@naver.com'),
+('USER3', '1234', '도우너', 'user3@gmail.com'),
+('USER4', '1234', '마이콜', 'user4@gmail.com'),
+('USER5', '1234', '고길동', 'user5@gmail.com');
+
+-- 게시물
+CREATE TABLE BOARD (
+    NO      	INT AUTO_INCREMENT COMMENT '글번호',
+    TITLE    	VARCHAR(50) NOT NULL COMMENT '제목',
+    CONTENT		VARCHAR(255) COMMENT '내용',
+    WRITER		VARCHAR(20) NOT NULL COMMENT '작성자',
+    REG_DATE	DATETIME COMMENT '등록일',
+    UPDATE_DATE	DATETIME COMMENT '수정일',
+    PRIMARY KEY(NO),
+    FOREIGN KEY (WRITER) REFERENCES USER(ID)
+);
+
+INSERT INTO BOARD
+(TITLE, CONTENT, WRITER, REG_DATE, UPDATE_DATE)
+VALUES
+('1번', '1번 게시물입니다', 'USER1', SYSDATE(), SYSDATE()),
+('2번', '2번 게시물입니다', 'USER1', SYSDATE(), SYSDATE()),
+('3번', '3번 게시물입니다', 'USER2', SYSDATE(), SYSDATE()),
+('4번', '4번 게시물입니다', 'USER3', SYSDATE(), SYSDATE()),
+('5번', '5번 게시물입니다', 'USER3', SYSDATE(), SYSDATE()),
+('6번', '6번 게시물입니다', 'USER4', SYSDATE(), SYSDATE()),
+('7번', '7번 게시물입니다', 'USER4', SYSDATE(), SYSDATE()),
+('8번', '8번 게시물입니다', 'USER4', SYSDATE(), SYSDATE()),
+('9번', '9번 게시물입니다', 'USER4', SYSDATE(), SYSDATE()),
+('10번', '10번 게시물입니다', 'USER5', SYSDATE(), SYSDATE());
+
+-- 댓글
+CREATE TABLE COMMENT (
+    NO      	INT AUTO_INCREMENT COMMENT '댓글번호',
+    CONTENT		VARCHAR(255) COMMENT '내용',
+    BOARD_NO    INT NOT NULL COMMENT '게시물번호',
+    WRITER		VARCHAR(20) NOT NULL COMMENT '작성자',
+    REG_DATE	DATETIME COMMENT '등록일',
+    UPDATE_DATE	DATETIME COMMENT '수정일',
+    PRIMARY KEY(NO),
+    FOREIGN KEY (BOARD_NO) REFERENCES BOARD(NO),
+    FOREIGN KEY (WRITER) REFERENCES USER(ID)
+);
+
+INSERT INTO COMMENT
+(CONTENT, BOARD_NO, WRITER, REG_DATE, UPDATE_DATE)
+VALUES
+('게시물1의 댓글1', 1, 'USER1', SYSDATE(), SYSDATE()),
+('게시물1의 댓글2', 1, 'USER4', SYSDATE(), SYSDATE()),
+('게시물3의 댓글1', 3, 'USER1', SYSDATE(), SYSDATE()),
+('게시물3의 댓글2', 3, 'USER2', SYSDATE(), SYSDATE()),
+('게시물3의 댓글3', 3, 'USER4', SYSDATE(), SYSDATE()),
+('게시물5의 댓글1', 5, 'USER2', SYSDATE(), SYSDATE()),
+('게시물6의 댓글1', 6, 'USER4', SYSDATE(), SYSDATE()),
+('게시물9의 댓글1', 9, 'USER1', SYSDATE(), SYSDATE()),
+('게시물9의 댓글2', 9, 'USER2', SYSDATE(), SYSDATE()),
+('게시물10의 댓글1', 10, 'USER1', SYSDATE(), SYSDATE());
+
+-- Q4.
+
+-- 2번 게시물의 내용을 "2번 게시물이 수정되었습니다"로 수정하세요.
+-- 이때, 수정일은 현재시간으로 변경됩니다.
+-- 5번 게시물의 내용을 "5번 게시물이 수정되었습니다"로 수정하세요.
+-- 이때, 수정일은 현재시간으로 변경됩니다.
+
+UPDATE BOARD 
+SET CONTENT="2번 게시물이 수정되었습니다", UPDATE_DATE = SYSDATE()
+WHERE NO = 2;
+
+UPDATE BOARD 
+SET CONTENT="5번 게시물이 수정되었습니다", UPDATE_DATE = SYSDATE()
+WHERE NO = 5;
+
+-- 각 게시물에 달린 댓글을 조회하세요.
+SELECT T1.NO AS 게시물번호, T1.TITLE AS 게시물제목, T2.NAME AS 게시물작성자, GROUP_CONCAT(T3.CONTENT) AS 댓글목록
+FROM BOARD T1
+JOIN USER T2
+ON T1.WRITER = T2.ID
+JOIN COMMENT T3
+ON T1.NO = T3.BOARD_NO
+GROUP BY T1.NO;
+
+-- 네이버 이메일을 쓰는 사람이 가장 최근에 수정한 게시물을 찾으세요
+SELECT T1.NO, T1.TITLE, T1.CONTENT, T1.UPDATE_DATE, T2.NAME, T2.EMAIL
+FROM BOARD T1
+JOIN USER T2
+ON T1.WRITER = T2.ID
+WHERE EMAIL LIKE '%@naver.com'
+ORDER BY T1.UPDATE_DATE DESC
+LIMIT 1;
+
+-- 댓글을 하나도 작성하지 않은 사람을 찾으세요.
+SELECT T1.ID, T1.NAME
+FROM USER T1
+LEFT JOIN COMMENT T2 -- LEFT JOIN 사용해야함!
+ON T1.ID = T2.WRITER
+WHERE T2.NO IS NULL;
+
+-- Q5. 도서, 회원, 도서대출
+
+-- 도서
+CREATE TABLE BOOK (
+    NO 	INT AUTO_INCREMENT COMMENT '도서번호',
+    TITLE 		VARCHAR(20) NOT NULL COMMENT '제목',
+    AUTHOR 		VARCHAR(10) COMMENT '저자',
+    PUBLISHER	VARCHAR(10) COMMENT '출판사',
+    PUBLISHED_DATE DATE COMMENT '출간일',
+    PRIMARY KEY(NO)
+);
+
+INSERT INTO BOOK (TITLE, AUTHOR, PUBLISHER, PUBLISHED_DATE)
+VALUES
+('혼자 공부하는 머신러닝', '박해선', '한빛미디어', 20200101),
+('비전공자를 위한 IT지식', '최원영', '한빛미디어', 20180101),
+('클린 코드', '마틴', '에이콘', 20190101),
+('모두의 SQL', '김도연', '길벗', 20200101),
+('블록체인 해설서', '이병욱', '에이콘', 20220101);
+
+-- 도서관 회원
+CREATE TABLE MEMBER (
+    ID 	VARCHAR(10) COMMENT '회원아이디',
+    FIRST_NAME 	VARCHAR(20) NOT NULL COMMENT '이름',
+    LAST_NAME 	VARCHAR(10) NOT NULL COMMENT '성',
+    AGE 		INT 		COMMENT '나이',
+	EMAIL 		VARCHAR(20) COMMENT '이메일',
+    PRIMARY KEY(ID)
+);
+
+INSERT INTO MEMBER
+VALUES
+('M001', '애숙', '한', 43, 'm001@naver.com'),
+('M002', '영복', '오', 45, 'm002@naver.com'),
+('M003', '아리', '오', 17, 'm003@gmail.com'),
+('M004', '동동', '오', 15, 'm004@gmail.com');
+
+-- 도서대출
+CREATE TABLE BOOK_LOAN_HISTORY ( 
+	BOOK_NO 	INT 		NOT NULL	COMMENT '대여한책', 
+	MEMBER_ID 	VARCHAR(10)	NOT NULL	COMMENT '대여자',
+	LOAN_DATE 	DATE 		COMMENT '대여일',
+	DUE_DATE 	DATE 		COMMENT '대여 마지막날',
+	RETURN_DATE DATE 		COMMENT '반납일',
+	FOREIGN KEY (BOOK_NO) REFERENCES BOOK(NO),
+	FOREIGN KEY (MEMBER_ID) REFERENCES MEMBER(ID)
+);
+
+INSERT INTO BOOK_LOAN_HISTORY
+VALUES
+(1, 'M002', '2024-01-01', '2024-01-08', '2024-01-07'),
+(1, 'M003', '2024-02-10', '2024-02-17', '2024-02-20'),
+(1, 'M004', '2024-03-05', '2024-03-12', '2024-03-10'),
+(2, 'M002', '2024-01-01', '2024-01-08', '2024-01-05'),
+(3, 'M001', '2024-02-05', '2024-02-12', '2024-02-18'),
+(3, 'M001', '2024-02-20', '2024-02-27', '2024-02-22'),
+(5, 'M002', '2024-01-11', '2024-01-18', '2024-01-15'),
+(5, 'M003', '2024-01-17', '2024-01-24', '2024-01-25'),
+(5, 'M004', '2024-03-05', '2024-03-12', '2024-03-11'),
+(5, 'M004', '2024-03-20', '2024-03-27', '2024-03-20');
+
+-- Q6.
+
+-- 반납일이 지나서 반납한 이력을 조회하세요.
+SELECT 
+T1.BOOK_NO AS 도서번호, 
+T2.TITLE AS 제목, 
+T1.DUE_DATE AS '대여 마지막날',
+T1.RETURN_DATE AS 반납일,
+CONCAT(T3.LAST_NAME,T3.FIRST_NAME) AS 대여자
+FROM BOOK_LOAN_HISTORY T1
+JOIN BOOK T2
+ON T1.BOOK_NO = T2.NO
+JOIN MEMBER T3
+ON T1.MEMBER_ID = T3.ID
+WHERE T1.RETURN_DATE > T1.DUE_DATE;
+
+-- 월별로 책의 대출건수를 구하세요.
+-- 단, 대출건수가 높은순으로 출력하세요.
+SELECT 
+CONCAT(MONTH(T1.LOAN_DATE),'월') AS 월, T2.TITLE AS 제목, COUNT(*) AS 대출건수
+FROM BOOK_LOAN_HISTORY T1
+JOIN BOOK T2
+ON T1.BOOK_NO = T2.NO
+JOIN MEMBER T3
+ON T1.MEMBER_ID = T3.ID
+GROUP BY MONTH(T1.LOAN_DATE), T1.BOOK_NO
+ORDER BY MONTH(T1.LOAN_DATE) ASC, COUNT(*) DESC;
+
+-- 10대 사용자의 대출 이력을 구하세요.
+SELECT 
+T1.MEMBER_ID AS 회원아이디, 
+CONCAT(T3.LAST_NAME,T3.FIRST_NAME) AS 회원이름,
+T3.AGE AS 나이,
+COUNT(*) AS 대출건수
+FROM BOOK_LOAN_HISTORY T1
+JOIN BOOK T2
+ON T1.BOOK_NO = T2.NO
+JOIN MEMBER T3
+ON T1.MEMBER_ID = T3.ID
+WHERE T3.AGE < 20
+GROUP BY T1.MEMBER_ID;
+
+
+-- Q7. CUSTOMER(고객), USER(사용자), MEMBER(도서관회원) 테이블을 이용하여 아래와 같은 결과를 만드세요.
+
+SELECT ID, NAME, AGE FROM CUSTOMER
+UNION
+SELECT ID, NAME, 10 AS AGE FROM USER
+UNION
+SELECT ID, CONCAT(LAST_NAME, FIRST_NAME), AGE FROM MEMBER;
+
+
+
+
+
+
+
+
